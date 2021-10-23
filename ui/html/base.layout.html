@@ -1,0 +1,47 @@
+{{define "base"}}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- here we are linking to a title from tempalte  -->
+    <title>{{template "title" .}} - Snippetbox</title>
+    <!-- here we link to the css style sheet and favicon  -->
+    <link rel="stylesheet" href="/static/css/main.css">
+    <!-- note 2 things - rel, as in how it relates to the html file i guess , and also type of the asset - this is specifc mime type for .icon files -->
+    <link rel="shortcut icon" href="/static/img/favicon.ico" type="image/x-icon">
+    <!-- and we also do some fonts font google -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Ubuntu+Mono:400,700">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  </head>
+  <body>
+
+    <header>
+      <h1>
+        <a href=""/">Snippetbox</a>
+      </h1>
+    </header>
+
+    <nav>
+      <a href="/">Home</a>
+    </nav>
+
+    <!-- this is just in case there is a sidebar -->
+    <!-- {{block "sidebar" .}}
+    <p>This is some default sidebar</p>
+    {{end}} -->
+
+    <main>
+      {{template "main" .}}
+    </main>
+
+    {{template "footer" .}}
+
+    <!-- and we will also include that main.js file to help us with styling nav -->
+    <!-- this is also mime type for js -->
+    <script src="/static/js/main.js" type="text/javascript"></script>
+
+
+  </body>
+</html>
+{{end}}
