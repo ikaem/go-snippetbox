@@ -8,6 +8,24 @@ import (
 	"text/template"
 )
 
+// type Handler interface {
+// 	ServeHTTP(ResponseWriter, *Request)
+// }
+
+// type home struct{}
+
+// func (h *home) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+// 	w.Write([]byte("This is my home page"))
+// }
+
+// mux := http.NewServeMux()
+// mux.Handle("/", &home{})
+
+// mux.Handle("/", http.HandlerFunc(home))
+// mux.HandlerFunc("/", home)
+
+// func ListenAndServe(addr string, handler Handler) error
+
 func home(w http.ResponseWriter, r *http.Request) {
 	// if incorrect path, just send not found status code
 	if r.URL.Path != "/" {
