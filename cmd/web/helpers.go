@@ -11,7 +11,8 @@ func (app *application) serverError(w http.ResponseWriter, err error) {
 	// this trace thing is just a string
 	trace := fmt.Sprintf("%s\n%s", err.Error(), debug.Stack())
 
-	app.errorLog.Println(trace)
+	// app.errorLog.Println(trace)
+	app.errorLog.Output(2, trace)
 
 	// and now we send the error to the user - we acutall send the response
 	// so we send usual text for the 500 code, and we send 500 code itself

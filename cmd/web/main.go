@@ -1,10 +1,13 @@
 package main
 
 import (
+	"database/sql"
 	"flag"
 	"log"
 	"net/http"
 	"os"
+
+	_ "github.com/go-sql-driver/mysql"
 )
 
 // we define app structto hold the app wide depndecies
@@ -17,6 +20,11 @@ type application struct {
 }
 
 func main() {
+
+	// test only
+	// we pass username and password i guess
+	// we seem to pass the database name too
+	/* 	db, err := sql.Open("mysql", "web:web@/snippetbox?parseTime=true") */
 
 	// this is a rought sketch on hot to log stuff to a file that is created in go
 
@@ -32,15 +40,25 @@ func main() {
 
 	// this returns address of the value
 	addr := flag.String("addr", ":4000", "HTTP network address")
+	dsn := flag.String("dsn", "web:web@/snippetbox?parseTime=true", "MYSQL data souce name")
 	flag.Parse()
 
 	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
 	errorLog := log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
 
+	db, err := openDB(*dsn)
+	if err != nil {
+		errorLog.Fatal(err)
+	}
+
+	// jsut close the db before main function exits
+	defer db.Close()
+
 	// here we create a new application object of Application type
 	// note how we always use jsut the address of the variable
 
 	// so here we just return address of a variable
+
 	app := &application{
 		errorLog: errorLog,
 		infoLog:  infoLog,
@@ -53,17 +71,17 @@ func main() {
 	// 	ErrorLog: *errorLog,
 	// }
 
-	mux := http.NewServeMux()
+	// mux := http.NewServeMux()
 
-	// mux.HandleFunc("/test-only", handlers.Home(app2))
+	// // mux.HandleFunc("/test-only", handlers.Home(app2))
 
-	mux.HandleFunc("/", app.home)
-	mux.HandleFunc("/snippet", app.showSnippet)
-	mux.HandleFunc("/snippet/create", app.createSnippet)
+	// mux.HandleFunc("/", app.home)
+	// mux.HandleFunc("/snippet", app.showSnippet)
+	// mux.HandleFunc("/snippet/create", app.createSnippet)
 
-	fileServer := http.FileServer(http.Dir("./ui/static/"))
+	// fileServer := http.FileServer(http.Dir("./ui/static/"))
 
-	mux.Handle("/static/", http.StripPrefix("/static", fileServer))
+	// mux.Handle("/static/", http.StripPrefix("/static", fileServer))
 
 	// so here we initialize a new http server struct
 	//  we set
@@ -77,13 +95,14 @@ func main() {
 		// this gets value at the address
 		Addr:     *addr,
 		ErrorLog: errorLog,
-		Handler:  mux,
+		// Handler:  mux,
+		Handler: app.routes(),
 	}
 
 	// again, fetching value at the address
 	infoLog.Printf("Starting server on %s", *addr)
 	// now we just call listen adn serve on our custom server
-	err := srv.ListenAndServe()
+	err = srv.ListenAndServe()
 	errorLog.Fatal(err)
 
 	// infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
@@ -136,4 +155,20 @@ func main() {
 	// err := http.ListenAndServe(*addr, mux)
 
 	// errorLog.Fatal(err)
+}
+
+// it returns databse stored in the address
+func openDB(dsn string) (*sql.DB, error) {
+
+	// this sql.Open will return address of the variable
+	db, err := sql.Open("mysql", dsn)
+	if err != nil {
+		return nil, err
+	}
+	if err = db.Ping(); err != nil {
+		return nil, err
+	}
+
+	return db, nil
+
 }

@@ -28,7 +28,8 @@ import (
 func (app *application) home(w http.ResponseWriter, r *http.Request) {
 	// if incorrect path, just send not found status code
 	if r.URL.Path != "/" {
-		http.NotFound(w, r)
+		// http.NotFound(w, r)
+		app.notFound(w)
 		return
 	}
 
@@ -44,8 +45,9 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 	ts, err := template.ParseFiles(files...)
 
 	if err != nil {
-		app.errorLog.Println(err.Error())
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		// app.errorLog.Println(err.Error())
+		// http.Error(w, "Internal server error", http.StatusInternalServerError)
+		app.serverError(w, err)
 		return
 	}
 
@@ -56,8 +58,9 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 
 	err = ts.Execute(w, nil)
 	if err != nil {
-		app.errorLog.Println(err.Error())
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		// app.errorLog.Println(err.Error())
+		// http.Error(w, "Internal server error", http.StatusInternalServerError)
+		app.serverError(w, err)
 	}
 
 	// w.Write([]byte("Hello from snippetbox"))
@@ -69,7 +72,8 @@ func (app *application) showSnippet(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(r.URL.Query().Get("id"))
 
 	if err != nil || id < 1 {
-		http.NotFound(w, r)
+		// http.NotFound(w, r)
+		app.notFound(w)
 		return
 	}
 
@@ -81,8 +85,10 @@ func (app *application) createSnippet(w http.ResponseWriter, r *http.Request) {
 		// making sure to send info to user that only POST is allowed
 		w.Header().Set("Allow", http.MethodPost)
 
+		app.clientError(w, http.StatusMethodNotAllowed)
+
 		// this is just a helper function that combines writing header an d then sending content with Write
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		// http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 
 		return
 	}
