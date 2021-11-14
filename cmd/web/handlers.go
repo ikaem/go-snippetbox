@@ -8,6 +8,12 @@ import (
 	"text/template"
 )
 
+// this is for serving a single file
+// careful!: http.ServeFile foes not automatically sanitize the file path - we  have to sanitize it first with filepath.Clean()
+func downloadHandler(w http.ResponseWriter, r *http.Request) {
+	http.ServeFile(w, r, "./ui/static/file.zip")
+}
+
 func home(w http.ResponseWriter, r *http.Request) {
 	// if incorrect path, just send not found status code
 	if r.URL.Path != "/" {
