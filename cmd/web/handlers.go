@@ -1,10 +1,13 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
 	"text/template"
+
+	"github.com/ikaem/snippetbox/pkg/models"
 )
 
 // type Handler interface {
@@ -39,6 +42,21 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 		// http.NotFound(w, r)
 		app.notFound(w)
 		return
+	}
+
+	// here we get the data
+
+	s, err := app.snippets.Latest()
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
+	// this would actually loop, and then send respoonse for each item
+	// there is no ending here
+
+	for _, snippet := range s {
+		fmt.Fprintf(w, "%v\n", snippet)
 	}
 
 	files := []string{
@@ -85,7 +103,28 @@ func (app *application) showSnippet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Fprintf(w, "Display a specific snippet with ID %d...", id)
+	// fmt.Fprintf(w, "Display a specific snippet with ID %d...", id)
+
+	// we return not found if nothing is found, or sever error if some other server errro
+
+	s, err := app.snippets.Get(id)
+
+	if err != nil {
+		if errors.Is(err, models.ErrNoRecord) {
+			app.notFound(w)
+		} else {
+			app.serverError(w, err)
+		}
+
+		return
+	}
+
+	// it is funny how we return data to the user with fmt
+	// and we actually return plan text, eve  though the thing is actualy object
+
+	fmt.Print(s)
+	fmt.Fprintf(w, "%v", s)
+	// return
 }
 
 func (app *application) createSnippet(w http.ResponseWriter, r *http.Request) {
@@ -101,5 +140,25 @@ func (app *application) createSnippet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Write([]byte("Created a new snippet..."))
+	// w.Write([]byte("Created a new snippet..."))
+
+	// this is just dummy data for now
+
+	title := "O snail"
+	content := "O snail\nClimb Mount Fuji,\nBut slowly, slowly!\n\n– Kobayashi Issa"
+	expires := "7"
+
+	// now we passt his data hto the funciton to insert snippet
+
+	id, err := app.snippets.Insert(title, content, expires)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
+	// and now we redirect, widht it being out id
+	// we also include stats
+	// status should be in 3xx
+	// we also forward the response and request
+	http.Redirect(w, r, fmt.Sprintf("/snippet?id=%d", id), http.StatusSeeOther)
 }

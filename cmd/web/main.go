@@ -8,6 +8,7 @@ import (
 	"os"
 
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/ikaem/snippetbox/pkg/models/mysql"
 )
 
 // we define app structto hold the app wide depndecies
@@ -17,6 +18,7 @@ import (
 type application struct {
 	errorLog *log.Logger
 	infoLog  *log.Logger
+	snippets *mysql.SnippetModel
 }
 
 func main() {
@@ -40,7 +42,7 @@ func main() {
 
 	// this returns address of the value
 	addr := flag.String("addr", ":4000", "HTTP network address")
-	dsn := flag.String("dsn", "web:web@/snippetbox?parseTime=true", "MYSQL data souce name")
+	dsn := flag.String("dsn", "tester:tester@/snippetbox?parseTime=true", "MYSQL data souce name")
 	flag.Parse()
 
 	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
@@ -62,6 +64,7 @@ func main() {
 	app := &application{
 		errorLog: errorLog,
 		infoLog:  infoLog,
+		snippets: &mysql.SnippetModel{DB: db},
 	}
 
 	// this is test only
