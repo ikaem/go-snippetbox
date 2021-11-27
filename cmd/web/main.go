@@ -106,6 +106,7 @@ func main() {
 	infoLog.Printf("Starting server on %s", *addr)
 	// now we just call listen adn serve on our custom server
 	err = srv.ListenAndServe()
+
 	errorLog.Fatal(err)
 
 	// infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
@@ -171,6 +172,18 @@ func openDB(dsn string) (*sql.DB, error) {
 	if err = db.Ping(); err != nil {
 		return nil, err
 	}
+
+	// set max number of concurrently open connexctions
+	// this is ide + in use
+	// <= 0 means that there is no max limit
+	// if all connections are in use, and new is required, go will waint until one is freed and is idle
+	// this is best left default
+	// db.SetMaxIdleConns(100)
+
+	// this is max numbler if idel connections
+	// this is best left default
+	// <= 0 means that no idle connections are retained
+	// db.SetMaxIdleConns(5)
 
 	return db, nil
 

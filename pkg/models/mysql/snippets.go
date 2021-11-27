@@ -144,3 +144,32 @@ func (m *SnippetModel) Latest() ([]*models.Snippet, error) {
 	return snippets, nil
 
 }
+
+func (m *SnippetModel) ExampleTransaction() error {
+	// so we need to call Being method on the connection pool
+	// this crreates an in progress database transaction
+
+	tx, err := m.DB.Begin()
+
+	if err != nil {
+		return err
+	}
+
+	// now we just work on the tanaction, instead of database
+
+	_, err = tx.Exec("INSERT INTO...")
+
+	if err != nil {
+		// in case of an error, we xcall rollback to abort the transaction
+		tx.Rollback()
+		return err
+
+	}
+
+	// and if all is good, we have to commit
+
+	err = tx.Commit()
+
+	return err
+
+}

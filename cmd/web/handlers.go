@@ -119,12 +119,34 @@ func (app *application) showSnippet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// and here we define data with the snippet and we pass the snippet value in
+	data := &templateData{Snippet: s}
+
+	// ok, now we define here the template
+
+	files := []string{
+		"./ui/html/show.page.html",
+		"./ui/html/base.layout.html",
+		"./ui/html/footer.partial.html",
+	}
+
+	ts, err := template.ParseFiles(files...)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
 	// it is funny how we return data to the user with fmt
 	// and we actually return plan text, eve  though the thing is actualy object
 
-	fmt.Print(s)
-	fmt.Fprintf(w, "%v", s)
+	// fmt.Print(s)
+	// fmt.Fprintf(w, "%v", s)
 	// return
+
+	err = ts.Execute(w, data)
+	if err != nil {
+		app.serverError(w, err)
+	}
 }
 
 func (app *application) createSnippet(w http.ResponseWriter, r *http.Request) {
