@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	"text/template"
 
 	"github.com/ikaem/snippetbox/pkg/models"
 )
@@ -52,45 +51,53 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// this is the new render helper
+
+	app.render(w, r, "home.page.html", &templateData{Snippets: s})
+
 	// this would actually loop, and then send respoonse for each item
 	// there is no ending here
 
-	for _, snippet := range s {
-		fmt.Fprintf(w, "%v\n", snippet)
-	}
+	// for _, snippet := range s {
+	// 	fmt.Fprintf(w, "%v\n", snippet)
+	// }
 
-	files := []string{
-		"./ui/html/home.page.html",
-		"./ui/html/base.layout.html",
-		"./ui/html/footer.partial.html",
-	}
+	// fmt.Printf("this is variable %v", s)
 
-	// so with  this we read the template file into a template set
-	// template set is the ts variable
-	// ts, err := template.ParseFiles("./ui/html/home.page.html")
-	ts, err := template.ParseFiles(files...)
+	// data :=
+	// 	&templateData{Snippets: s}
 
-	if err != nil {
-		// app.errorLog.Println(err.Error())
-		// http.Error(w, "Internal server error", http.StatusInternalServerError)
-		app.serverError(w, err)
-		return
-	}
+	// files := []string{
+	// 	"./ui/html/home.page.html",
+	// 	"./ui/html/base.layout.html",
+	// 	"./ui/html/footer.partial.html",
+	// }
 
+	// // so with  this we read the template file into a template set
+	// // template set is the ts variable
+	// // ts, err := template.ParseFiles("./ui/html/home.page.html")
+	// ts, err := template.ParseFiles(files...)
+
+	// if err != nil {
+	// 	// app.errorLog.Println(err.Error())
+	// 	// http.Error(w, "Internal server error", http.StatusInternalServerError)
+	// 	app.serverError(w, err)
+	// 	return
 	// now, we will use Execute to write the template as the response body
 	// the last variable, for which we passed nil
 	// is any dynamic data we want to pass in
 	// we have no dynamic data for now
 
-	err = ts.Execute(w, nil)
-	if err != nil {
-		// app.errorLog.Println(err.Error())
-		// http.Error(w, "Internal server error", http.StatusInternalServerError)
-		app.serverError(w, err)
-	}
-
-	// w.Write([]byte("Hello from snippetbox"))
+	// err = ts.Execute(w, data)
+	// if err != nil {
+	// app.errorLog.Println(err.Error())
+	// http.Error(w, "Internal server error", http.StatusInternalServerError)
+	// app.serverError(w, err)
+	// }
 }
+
+// w.Write([]byte("Hello from snippetbox"))
+// }
 
 // here we access value storein a address
 func (app *application) showSnippet(w http.ResponseWriter, r *http.Request) {
@@ -119,22 +126,25 @@ func (app *application) showSnippet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// again, using the helper
+	app.render(w, r, "show.page.html", &templateData{Snippet: s})
+
 	// and here we define data with the snippet and we pass the snippet value in
-	data := &templateData{Snippet: s}
+	// data := &templateData{Snippet: s}
 
-	// ok, now we define here the template
+	// // ok, now we define here the template
 
-	files := []string{
-		"./ui/html/show.page.html",
-		"./ui/html/base.layout.html",
-		"./ui/html/footer.partial.html",
-	}
+	// files := []string{
+	// 	"./ui/html/show.page.html",
+	// 	"./ui/html/base.layout.html",
+	// 	"./ui/html/footer.partial.html",
+	// }
 
-	ts, err := template.ParseFiles(files...)
-	if err != nil {
-		app.serverError(w, err)
-		return
-	}
+	// ts, err := template.ParseFiles(files...)
+	// if err != nil {
+	// 	app.serverError(w, err)
+	// 	return
+	// }
 
 	// it is funny how we return data to the user with fmt
 	// and we actually return plan text, eve  though the thing is actualy object
@@ -143,10 +153,10 @@ func (app *application) showSnippet(w http.ResponseWriter, r *http.Request) {
 	// fmt.Fprintf(w, "%v", s)
 	// return
 
-	err = ts.Execute(w, data)
-	if err != nil {
-		app.serverError(w, err)
-	}
+	// err = ts.Execute(w, data)
+	// if err != nil {
+	// 	app.serverError(w, err)
+	// }
 }
 
 func (app *application) createSnippet(w http.ResponseWriter, r *http.Request) {

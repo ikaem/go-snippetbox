@@ -1,6 +1,27 @@
 {{template "base" .}} 
 {{define "title"}}Home{{end}} 
 {{define "main"}}
-<h2>Latest snippets</h2>
-<p>There is nothing to see here yet</p>
+  <h2>Latest snippets</h2>
+  {{if not .Snippets}} 
+  <p>There is nothing to see here yet</p>
+  {{else}}
+  <table>
+    <tr>
+      <th>Title</th>
+      <th>Created</th>
+      <th>ID</th>
+    </tr>
+    {{range .Snippets}}
+    <tr>
+      <td>
+        <!-- se how range mvoes dot to its alements -->
+        <a href="/snippet?id={{.ID}}">{{.Title}}</a>
+        <!-- here we use the function - seems we just call it with value of created  -->
+        <td>{{humanDate .Created}}</td>
+        <td>#{{.ID}}</td>
+      </td>
+    </tr>
+    {{end}}
+  </table>
+  {{end}}
 {{end}}

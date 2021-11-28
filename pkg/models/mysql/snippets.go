@@ -4,6 +4,7 @@ package mysql
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 
 	"github.com/ikaem/snippetbox/pkg/models"
 )
@@ -121,6 +122,8 @@ func (m *SnippetModel) Latest() ([]*models.Snippet, error) {
 	// we now loop of rows in the resultset
 	// it will prepare first and each subseuqnet row to be acted on by the rows.scan
 
+	fmt.Printf("%v", rows)
+
 	for rows.Next() {
 		// create point to a new zeroed snippet struct
 
@@ -133,6 +136,8 @@ func (m *SnippetModel) Latest() ([]*models.Snippet, error) {
 		}
 
 		// now we append values to the snippers slice
+
+		snippets = append(snippets, s)
 	}
 
 	// now we call rows.err to check if there was any error during iteration
@@ -140,6 +145,8 @@ func (m *SnippetModel) Latest() ([]*models.Snippet, error) {
 	if err = rows.Err(); err != nil {
 		return nil, err
 	}
+
+	fmt.Printf("%v", snippets)
 
 	return snippets, nil
 

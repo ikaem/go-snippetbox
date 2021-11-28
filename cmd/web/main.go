@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"text/template"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/ikaem/snippetbox/pkg/models/mysql"
@@ -16,9 +17,10 @@ import (
 // so here we have two fields - and both are type of the Logger
 // note that we point to this interface, or type actually logger
 type application struct {
-	errorLog *log.Logger
-	infoLog  *log.Logger
-	snippets *mysql.SnippetModel
+	errorLog      *log.Logger
+	infoLog       *log.Logger
+	snippets      *mysql.SnippetModel
+	templateCache map[string]*template.Template
 }
 
 func main() {
@@ -56,15 +58,22 @@ func main() {
 	// jsut close the db before main function exits
 	defer db.Close()
 
+	// here we initialize the template cahce
+	templateCache, err := newTemplateCache("./ui/html")
+	if err != nil {
+		errorLog.Fatal(err)
+	}
+
 	// here we create a new application object of Application type
 	// note how we always use jsut the address of the variable
 
 	// so here we just return address of a variable
 
 	app := &application{
-		errorLog: errorLog,
-		infoLog:  infoLog,
-		snippets: &mysql.SnippetModel{DB: db},
+		errorLog:      errorLog,
+		infoLog:       infoLog,
+		snippets:      &mysql.SnippetModel{DB: db},
+		templateCache: templateCache,
 	}
 
 	// this is test only
