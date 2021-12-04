@@ -3,7 +3,9 @@ package main
 import (
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
+	"runtime/debug"
 	"strconv"
 
 	"github.com/ikaem/snippetbox/pkg/models"
@@ -42,6 +44,8 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 		app.notFound(w)
 		return
 	}
+
+	// panic("This is a deleberate panic!")
 
 	// here we get the data
 
@@ -193,4 +197,24 @@ func (app *application) createSnippet(w http.ResponseWriter, r *http.Request) {
 	// status should be in 3xx
 	// we also forward the response and request
 	http.Redirect(w, r, fmt.Sprintf("/snippet?id=%d", id), http.StatusSeeOther)
+}
+
+// example handler that spins up its own goroutine for some additoanly work
+// and then also handles any possible panicikging there
+
+func myExampleRecoverGoSubroutinePanicHandler(w http.ResponseWriter, r *http.Request) {
+	// stuff
+
+	// spin up a new goroutine
+	go func() {
+		defer func() {
+			if err := recover(); err != nil {
+				log.Println(fmt.Errorf("%s\n%s", err, debug.Stack()))
+			}
+		}()
+
+		// doSomeBackgroundProcessing()
+	}()
+
+	w.Write([]byte("Ok"))
 }
