@@ -15,10 +15,10 @@ func Home(app *config.Application) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		// if incorrect path, just send not found status code
-		if r.URL.Path != "/" {
-			http.NotFound(w, r)
-			return
-		}
+		// if r.URL.Path != "/" {
+		// 	http.NotFound(w, r)
+		// 	return
+		// }
 
 		files := []string{
 			"./ui/html/home.page.html",

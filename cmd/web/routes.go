@@ -9,13 +9,13 @@ import (
 	"github.com/justinas/alice"
 )
 
-func some() {
+// func some() {
 
-	// just an example for crateing a router and registering a route with the pat package
-	mux := pat.New()
-	mux.Get("/snippet/:id", http.HandlerFunc(app.showSnippet))
+// 	// just an example for crateing a router and registering a route with the pat package
+// 	mux := pat.New()
+// 	mux.Get("/snippet/:id", http.HandlerFunc(app.showSnippet))
 
-}
+// }
 
 // func (app *application) routes() *http.ServeMux {
 func (app *application) routes() http.Handler {
@@ -23,14 +23,22 @@ func (app *application) routes() http.Handler {
 	// this is creating the middleware chain
 	standardMiddleware := alice.New(app.recoverPanic, app.logRequest, secureHeaders)
 
-	mux := http.NewServeMux()
-	mux.HandleFunc("/", app.home)
-	mux.HandleFunc("/snippet", app.showSnippet)
-	mux.HandleFunc("/snippet/create", app.createSnippet)
+	mux := pat.New()
+	mux.Get("/", http.HandlerFunc(app.home))
+	mux.Get("/snippet/create", http.HandlerFunc(app.createSnippetForm))
+	mux.Post("/snippet/create", http.HandlerFunc(app.createSnippet))
+	// this one goes all the way down so it matches only those routes that the two above dont
+	mux.Get("/snippet/:id", http.HandlerFunc(app.showSnippet))
+
+	// mux := http.NewServeMux()
+	// mux.HandleFunc("/", app.home)
+	// mux.HandleFunc("/snippet", app.showSnippet)
+	// mux.HandleFunc("/snippet/create", app.createSnippet)
 
 	fileServer := http.FileServer(http.Dir("./ui/static/"))
+	mux.Get("/static/", http.StripPrefix("/static", fileServer))
 
-	mux.Handle("/static/", http.StripPrefix("/static", fileServer))
+	// mux.Handle("/static/", http.StripPrefix("/static", fileServer))
 
 	// this is now using the standard middleware, then use the handler
 	return standardMiddleware.Then(mux)

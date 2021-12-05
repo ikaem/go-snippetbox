@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"runtime/debug"
 	"strconv"
+	"strings"
+	"unicode/utf8"
 
 	"github.com/ikaem/snippetbox/pkg/models"
 )
@@ -39,11 +41,11 @@ import (
 
 func (app *application) home(w http.ResponseWriter, r *http.Request) {
 	// if incorrect path, just send not found status code
-	if r.URL.Path != "/" {
-		// http.NotFound(w, r)
-		app.notFound(w)
-		return
-	}
+	// if r.URL.Path != "/" {
+	// 	// http.NotFound(w, r)
+	// 	app.notFound(w)
+	// 	return
+	// }
 
 	// panic("This is a deleberate panic!")
 
@@ -106,7 +108,8 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 // here we access value storein a address
 func (app *application) showSnippet(w http.ResponseWriter, r *http.Request) {
 	// make sure to get the snippet id
-	id, err := strconv.Atoi(r.URL.Query().Get("id"))
+	// id, err := strconv.Atoi(r.URL.Query().Get("id"))
+	id, err := strconv.Atoi(r.URL.Query().Get(":id"))
 
 	if err != nil || id < 1 {
 		// http.NotFound(w, r)
@@ -163,26 +166,90 @@ func (app *application) showSnippet(w http.ResponseWriter, r *http.Request) {
 	// }
 }
 
+func (app *application) createSnippetForm(w http.ResponseWriter, r *http.Request) {
+	// w.Write([]byte("Create a new snippet"))
+	app.render(w, r, "create.page.html", nil)
+}
+
 func (app *application) createSnippet(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		// making sure to send info to user that only POST is allowed
-		w.Header().Set("Allow", http.MethodPost)
 
-		app.clientError(w, http.StatusMethodNotAllowed)
+	// /* just example to limit size of the body */
+	// r.Body = http.MaxBytesReader(w, r.Body, 4096)
+	// err := r.ParseForm()
+	// if err != nil {
+	// 	http.Error(w, "Bad request", http.StatusBadRequest)
+	// 	return
+	// }
 
-		// this is just a helper function that combines writing header an d then sending content with Write
-		// http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	// we call parse form to pput dany data in post request body to the r.PostForm map
+	// if any errors, we will send 400 error back
 
+	err := r.ParseForm()
+	if err != nil {
+		app.clientError(w, http.StatusBadRequest)
 		return
 	}
+
+	/* then we get data from the parse d data  */
+
+	title := r.PostForm.Get("title")
+	content := r.PostForm.Get("content")
+	expires := r.PostForm.Get("expires")
+
+	// we create a map to hold validation errors
+	errors := make(map[string]string)
+
+	// ćcheck that the title field is not emtpy, or bigger than 100 chars
+	if strings.TrimSpace(title) == "" {
+		errors["title"] = "This field cannot be blank"
+	} else if utf8.RuneCountInString(title) > 100 {
+		errors["title"] = "This field is too long (maximum is 100 characters"
+	}
+
+	if strings.TrimSpace(content) == "" {
+		errors["content"] = "This field cannot be blank"
+	}
+
+	// we also check that expire value is a valid one
+	if strings.TrimSpace(expires) == "" {
+		errors["expires"] = "This field cannot be blank"
+	} else if expires != "365" && expires != "7" && expires != "1" {
+		errors["expires"] = "This field is invalid"
+	}
+
+	// now we just check if there are any errors
+
+	if len(errors) > 0 {
+		fmt.Fprint(w, errors)
+		return
+	}
+
+	// just test
+
+	// items is some field on the parsed form object
+	// for i, item := range r.PostForm["items"] {
+	// 	// fmt.Fprintf(w, "%d: item %s\n", i, item)
+	// }
+
+	// if r.Method != http.MethodPost {
+	// 	// making sure to send info to user that only POST is allowed
+	// 	w.Header().Set("Allow", http.MethodPost)
+
+	// 	app.clientError(w, http.StatusMethodNotAllowed)
+
+	// 	// this is just a helper function that combines writing header an d then sending content with Write
+	// 	// http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+
+	// 	return
+	// }
 
 	// w.Write([]byte("Created a new snippet..."))
 
 	// this is just dummy data for now
 
-	title := "O snail"
-	content := "O snail\nClimb Mount Fuji,\nBut slowly, slowly!\n\n– Kobayashi Issa"
-	expires := "7"
+	// title := "O snail"
+	// content := "O snail\nClimb Mount Fuji,\nBut slowly, slowly!\n\n– Kobayashi Issa"
+	// expires := "7"
 
 	// now we passt his data hto the funciton to insert snippet
 
@@ -196,7 +263,8 @@ func (app *application) createSnippet(w http.ResponseWriter, r *http.Request) {
 	// we also include stats
 	// status should be in 3xx
 	// we also forward the response and request
-	http.Redirect(w, r, fmt.Sprintf("/snippet?id=%d", id), http.StatusSeeOther)
+	// http.Redirect(w, r, fmt.Sprintf("/snippet?id=%d", id), http.StatusSeeOther)
+	http.Redirect(w, r, fmt.Sprintf("/snippet/%d", id), http.StatusSeeOther)
 }
 
 // example handler that spins up its own goroutine for some additoanly work
