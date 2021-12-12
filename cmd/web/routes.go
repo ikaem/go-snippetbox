@@ -23,12 +23,17 @@ func (app *application) routes() http.Handler {
 	// this is creating the middleware chain
 	standardMiddleware := alice.New(app.recoverPanic, app.logRequest, secureHeaders)
 
+	// thsi is middleware chain  for the dynamic app routes
+	dynamicMiddleware := alice.New(app.session.Enable)
+
 	mux := pat.New()
-	mux.Get("/", http.HandlerFunc(app.home))
-	mux.Get("/snippet/create", http.HandlerFunc(app.createSnippetForm))
-	mux.Post("/snippet/create", http.HandlerFunc(app.createSnippet))
+	mux.Get("/", dynamicMiddleware.ThenFunc(app.home))
+	// example if no alice has been used
+	// mux.Get("/", app.session.Enable(http.HandlerFunc(app.home)))
+	mux.Get("/snippet/create", dynamicMiddleware.ThenFunc(app.createSnippetForm))
+	mux.Post("/snippet/create", dynamicMiddleware.ThenFunc(app.createSnippet))
 	// this one goes all the way down so it matches only those routes that the two above dont
-	mux.Get("/snippet/:id", http.HandlerFunc(app.showSnippet))
+	mux.Get("/snippet/:id", dynamicMiddleware.ThenFunc(app.showSnippet))
 
 	// mux := http.NewServeMux()
 	// mux.HandleFunc("/", app.home)

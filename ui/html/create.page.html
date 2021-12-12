@@ -3,23 +3,55 @@
 {{define "main"}}
 
 <form action="/snippet/create" method="POST">
+  {{with .Form}}
   <div>
     <label for="title">Title:</label>
-    <input type="text" name="title" id="title">
+      {{with .Errors.Get "title"}}
+        <label class="error">{{.}}</label>
+      {{end}}
+      <!-- note that here, .Get refers to the .Form, not .Errors -->
+    <input type="text" name="title" id="title" value="{{.Get "title"}}">
   </div>
   <div>
     <label for="content">Content:</label>
-    <textarea name="content" id="content"></textarea>
+    {{with .Errors.Get "content"}}
+      <label class="error">{{.}}</label>
+    {{end}}
+    <!-- again, this is for .Form - it has Get method now because of url.Values -->
+    <textarea name="content" id="content">{{.Get "content"}}</textarea>
   </div>
   <div>
     <label for="expires">Delete in:</label>
-    <input type="radio" name="expires" id="expires" value="365" checked> One year
-    <input type="radio" name="expires" id="expires" value="7"> One week
-    <input type="radio" name="expires" id="expires" value="1"> One day
+    {{with .Errors.Get "expires"}}
+      <label class="error">{{.}}</label>
+    {{end}}
+    {{$exp := or (.Get "expires") "365"}}
+    <input 
+      type="radio" 
+      name="expires" 
+      id="expires" 
+      {{if (eq $exp "365")}}checked{{end}} 
+      value="365"
+    > One year
+    <input
+      type="radio" 
+      name="expires" 
+      id="expires" 
+      {{if (eq $exp "7")}}checked{{end}} 
+      value="7"
+    > One week
+    <input
+      type="radio" 
+      name="expires" 
+      id="expires" 
+      {{if (eq $exp "1")}}checked{{end}} 
+      value="1"
+    > One day
   </div>
   <div>
     <input type="submit" value="Publish snippet">
   </div>
+  {{end}}
 </form>
 
 {{end}}

@@ -7,8 +7,10 @@ import (
 	"net/http"
 	"os"
 	"text/template"
+	"time"
 
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/golangcollege/sessions"
 	"github.com/ikaem/snippetbox/pkg/models/mysql"
 )
 
@@ -19,6 +21,7 @@ import (
 type application struct {
 	errorLog      *log.Logger
 	infoLog       *log.Logger
+	session       *sessions.Session
 	snippets      *mysql.SnippetModel
 	templateCache map[string]*template.Template
 }
@@ -45,6 +48,8 @@ func main() {
 	// this returns address of the value
 	addr := flag.String("addr", ":4000", "HTTP network address")
 	dsn := flag.String("dsn", "tester:tester@/snippetbox?parseTime=true", "MYSQL data souce name")
+	// here we just defined the secret - we take it from the flag of the command line input, or default it
+	secret := flag.String("secret", "34d7603c14175727a3efb894f9846f17", "Secret key")
 	flag.Parse()
 
 	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
@@ -64,6 +69,10 @@ func main() {
 		errorLog.Fatal(err)
 	}
 
+	// so now we initialize the session manager
+	session := sessions.New([]byte(*secret))
+	session.Lifetime = 12 * time.Hour
+
 	// here we create a new application object of Application type
 	// note how we always use jsut the address of the variable
 
@@ -74,6 +83,7 @@ func main() {
 		infoLog:       infoLog,
 		snippets:      &mysql.SnippetModel{DB: db},
 		templateCache: templateCache,
+		session:       session,
 	}
 
 	// this is test only
@@ -114,7 +124,9 @@ func main() {
 	// again, fetching value at the address
 	infoLog.Printf("Starting server on %s", *addr)
 	// now we just call listen adn serve on our custom server
-	err = srv.ListenAndServe()
+	// err = srv.ListenAndServe()
+	// this is now tls connection
+	err = srv.ListenAndServeTLS("./tls/cert.pem", "./tls/key.pem")
 
 	errorLog.Fatal(err)
 

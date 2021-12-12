@@ -40,6 +40,9 @@ func (app *application) addDefaultData(td *templateData, r *http.Request) *templ
 	}
 
 	td.CurrentYear = time.Now().Year()
+
+	// this is automatic adding of template data
+	td.Flash = app.session.PopString(r, "Flash")
 	return td
 }
 
@@ -49,7 +52,7 @@ func (app *application) render(w http.ResponseWriter, r *http.Request, name stri
 	ts, ok := app.templateCache[name]
 	if !ok {
 		// note the use of Errorf metod to format error
-		app.serverError(w, fmt.Errorf("The template %s does not exist", name))
+		app.serverError(w, fmt.Errorf("the template %s does not exist", name))
 	}
 
 	// we need to initialize a buffer

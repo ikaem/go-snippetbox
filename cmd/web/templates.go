@@ -7,6 +7,7 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/ikaem/snippetbox/pkg/forms"
 	"github.com/ikaem/snippetbox/pkg/models"
 )
 
@@ -14,6 +15,10 @@ type templateData struct {
 	CurrentYear int
 	Snippet     *models.Snippet
 	Snippets    []*models.Snippet
+	Form        *forms.Form
+	Flash       string
+	// FormData    url.Values
+	// FormErrors  map[string]string
 }
 
 // we create a function

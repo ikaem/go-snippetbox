@@ -7,9 +7,8 @@ import (
 	"net/http"
 	"runtime/debug"
 	"strconv"
-	"strings"
-	"unicode/utf8"
 
+	"github.com/ikaem/snippetbox/pkg/forms"
 	"github.com/ikaem/snippetbox/pkg/models"
 )
 
@@ -133,8 +132,15 @@ func (app *application) showSnippet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// here we get the flash from the thing - session - cookie
+	// flash := app.session.PopString(r, "flash")
+
 	// again, using the helper
-	app.render(w, r, "show.page.html", &templateData{Snippet: s})
+	app.render(w, r, "show.page.html", &templateData{
+		Snippet: s,
+		// this throws error because we dont have Flash field defined on the struct
+		// Flash: flash,
+	})
 
 	// and here we define data with the snippet and we pass the snippet value in
 	// data := &templateData{Snippet: s}
@@ -168,7 +174,10 @@ func (app *application) showSnippet(w http.ResponseWriter, r *http.Request) {
 
 func (app *application) createSnippetForm(w http.ResponseWriter, r *http.Request) {
 	// w.Write([]byte("Create a new snippet"))
-	app.render(w, r, "create.page.html", nil)
+	// app.render(w, r, "create.page.html", nil)
+	app.render(w, r, "create.page.html", &templateData{
+		Form: forms.New(nil),
+	})
 }
 
 func (app *application) createSnippet(w http.ResponseWriter, r *http.Request) {
@@ -190,81 +199,112 @@ func (app *application) createSnippet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	/* then we get data from the parse d data  */
+	form := forms.New(r.PostForm)
+	form.Required("title", "content", "expires")
+	form.MaxLength("title", 100)
+	form.PermittedValues("expires", "365", "7", "1")
 
-	title := r.PostForm.Get("title")
-	content := r.PostForm.Get("content")
-	expires := r.PostForm.Get("expires")
-
-	// we create a map to hold validation errors
-	errors := make(map[string]string)
-
-	// ćcheck that the title field is not emtpy, or bigger than 100 chars
-	if strings.TrimSpace(title) == "" {
-		errors["title"] = "This field cannot be blank"
-	} else if utf8.RuneCountInString(title) > 100 {
-		errors["title"] = "This field is too long (maximum is 100 characters"
-	}
-
-	if strings.TrimSpace(content) == "" {
-		errors["content"] = "This field cannot be blank"
-	}
-
-	// we also check that expire value is a valid one
-	if strings.TrimSpace(expires) == "" {
-		errors["expires"] = "This field cannot be blank"
-	} else if expires != "365" && expires != "7" && expires != "1" {
-		errors["expires"] = "This field is invalid"
-	}
-
-	// now we just check if there are any errors
-
-	if len(errors) > 0 {
-		fmt.Fprint(w, errors)
+	if !form.Valid() {
+		// cool how we dont have to pass in all data to the struct
+		// we can just pass some of we name it
+		app.render(w, r, "create.page.html", &templateData{Form: form})
 		return
 	}
 
-	// just test
+	// and nbow we can use form get to insert data into the db
+	// these vield are validated
+	id, err := app.snippets.Insert(form.Get("title"), form.Get("content"), form.Get("expires"))
 
-	// items is some field on the parsed form object
-	// for i, item := range r.PostForm["items"] {
-	// 	// fmt.Fprintf(w, "%d: item %s\n", i, item)
-	// }
-
-	// if r.Method != http.MethodPost {
-	// 	// making sure to send info to user that only POST is allowed
-	// 	w.Header().Set("Allow", http.MethodPost)
-
-	// 	app.clientError(w, http.StatusMethodNotAllowed)
-
-	// 	// this is just a helper function that combines writing header an d then sending content with Write
-	// 	// http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-
-	// 	return
-	// }
-
-	// w.Write([]byte("Created a new snippet..."))
-
-	// this is just dummy data for now
-
-	// title := "O snail"
-	// content := "O snail\nClimb Mount Fuji,\nBut slowly, slowly!\n\n– Kobayashi Issa"
-	// expires := "7"
-
-	// now we passt his data hto the funciton to insert snippet
-
-	id, err := app.snippets.Insert(title, content, expires)
 	if err != nil {
 		app.serverError(w, err)
 		return
 	}
+
+	// this is where we put the data inside the seesion (cookie)
+	app.session.Put(r, "flash", "Snippet successfully created!")
+
+	http.Redirect(w, r, fmt.Sprintf("/snippet/%d", id), http.StatusSeeOther)
+
+	/* then we get data from the parse d data  */
+
+	// title := r.PostForm.Get("title")
+	// content := r.PostForm.Get("content")
+	// expires := r.PostForm.Get("expires")
+
+	// // we create a map to hold validation errors
+	// errors := make(map[string]string)
+
+	// // ćcheck that the title field is not emtpy, or bigger than 100 chars
+	// if strings.TrimSpace(title) == "" {
+	// 	errors["title"] = "This field cannot be blank"
+	// } else if utf8.RuneCountInString(title) > 100 {
+	// 	errors["title"] = "This field is too long (maximum is 100 characters"
+	// }
+
+	// if strings.TrimSpace(content) == "" {
+	// 	errors["content"] = "This field cannot be blank"
+	// }
+
+	// // we also check that expire value is a valid one
+	// if strings.TrimSpace(expires) == "" {
+	// 	errors["expires"] = "This field cannot be blank"
+	// } else if expires != "365" && expires != "7" && expires != "1" {
+	// 	errors["expires"] = "This field is invalid"
+	// }
+
+	// // now we just check if there are any errors
+
+	// if len(errors) > 0 {
+	// 	// fmt.Fprint(w, errors)
+	// 	// here we just send back that form data again
+	// 	// and in the data, we put back the data
+	// 	app.render(w, r, "create.page.html", &templateData{
+	// 		FormErrors: errors,
+	// 		FormData:   r.PostForm,
+	// 	})
+	// 	return
+	// }
+
+	// // just test
+
+	// // items is some field on the parsed form object
+	// // for i, item := range r.PostForm["items"] {
+	// // 	// fmt.Fprintf(w, "%d: item %s\n", i, item)
+	// // }
+
+	// // if r.Method != http.MethodPost {
+	// // 	// making sure to send info to user that only POST is allowed
+	// // 	w.Header().Set("Allow", http.MethodPost)
+
+	// // 	app.clientError(w, http.StatusMethodNotAllowed)
+
+	// // 	// this is just a helper function that combines writing header an d then sending content with Write
+	// // 	// http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+
+	// // 	return
+	// // }
+
+	// // w.Write([]byte("Created a new snippet..."))
+
+	// // this is just dummy data for now
+
+	// // title := "O snail"
+	// // content := "O snail\nClimb Mount Fuji,\nBut slowly, slowly!\n\n– Kobayashi Issa"
+	// // expires := "7"
+
+	// // now we passt his data hto the funciton to insert snippet
+
+	// id, err := app.snippets.Insert(title, content, expires)
+	// if err != nil {
+	// 	app.serverError(w, err)
+	// 	return
+	// }
 
 	// and now we redirect, widht it being out id
 	// we also include stats
 	// status should be in 3xx
 	// we also forward the response and request
 	// http.Redirect(w, r, fmt.Sprintf("/snippet?id=%d", id), http.StatusSeeOther)
-	http.Redirect(w, r, fmt.Sprintf("/snippet/%d", id), http.StatusSeeOther)
 }
 
 // example handler that spins up its own goroutine for some additoanly work
